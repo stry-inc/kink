@@ -2,7 +2,7 @@ import asyncio
 from functools import wraps
 from abc import ABC
 from inspect import Parameter as InspectParameter, isclass, signature
-from typing import Any, Callable, Dict, NewType, Tuple, Type, TypeVar
+from typing import Any, Callable, Dict, NewType, Tuple, Type, TypeVar, Union
 
 from typing_extensions import Protocol
 
@@ -139,6 +139,7 @@ def _decorate(binding: Dict[str, Any], service: Type[T], container: Container) -
 
 def inject(
     _service: Any = None,
+    with_name: str = None,
     alias: Any = None,
     bind: Dict[str, Any] = None,
     container: Container = di,
@@ -146,24 +147,27 @@ def inject(
 ) -> Any:
     def _decorator(_service: Any) -> Any:
         if isclass(_service):
+            final_key = with_name or _service
+
             setattr(
                 _service, "__init__", _decorate(bind or {}, getattr(_service, "__init__"), container),
             )
             if use_factory:
-                container.factories[_service] = lambda _di: _service()
+                container.factories[final_key] = lambda _di: _service()
                 if alias:
-                    container.add_alias(alias, _service)
+                    container.add_alias(alias, final_key)
             else:
-                container[_service] = lambda _di: _service()
+                container[final_key] = lambda _di: _service()
                 if alias:
-                    container.add_alias(alias, _service)
+                    container.add_alias(alias, final_key)
 
             return _service
 
         service_function = _decorate(bind or {}, _service, container)
-        container[service_function.__name__] = service_function
+        final_key = with_name or service_function.__name__
+        container[final_key] = service_function
         if alias:
-            container.add_alias(alias, service_function.__name__)
+            container.add_alias(alias, final_key)
 
         return service_function
 
