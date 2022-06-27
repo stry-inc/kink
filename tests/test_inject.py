@@ -39,7 +39,7 @@ def test_can_do_constructor_injection() -> None:
         def __init__(self, message: str):
             self.message = message
 
-    instance = A()
+    instance = A()  # type: ignore
     assert instance.message == "Hello, Tom"
     instance = A("Hello, Jack")
     assert instance.message == "Hello, Jack"
@@ -73,7 +73,7 @@ def test_resolve_complex_dependencies() -> None:
             self.a_inst = a_inst
             self.b_inst = b_inst
 
-    c_inst = C()
+    c_inst = C()  # type: ignore
 
     assert c_inst.a_inst == di[A]
     assert c_inst.b_inst == di[B]
